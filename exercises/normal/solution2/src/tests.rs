@@ -1,6 +1,6 @@
-
 // src/tests.rs
 mod converter;
+
 #[cfg(test)]
 mod tests {
     use super::converter::convert_base;

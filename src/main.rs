@@ -1,17 +1,17 @@
 use serde::{Deserialize, Serialize};
 use std::fs::{self, File};
-use std::path::{Path, PathBuf};
-use std::process::{Command, exit};
+use std::io;
+use std::path::PathBuf;
+use std::process::{exit, Command};
 use std::time::Instant;
-use std::io::{self, Write};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct Exercise {
     name: String,
     path: String,
     #[serde(rename = "type")]
-    exercise_type: String,  
-    score: i32, 
+    exercise_type: String,
+    score: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -25,7 +25,7 @@ struct ExerciseConfig {
 struct ExerciseResult {
     name: String,
     result: bool,
-    score: i32, 
+    score: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -33,7 +33,7 @@ struct Statistics {
     total_exercises: usize,
     total_successes: usize,
     total_failures: usize,
-    total_score: i32,  
+    total_score: i32,
     total_time: u64,
 }
 
@@ -53,7 +53,6 @@ fn main() {
     let mode = &args[1];
     let start_time = Instant::now();
 
-    
     let config = match load_exercise_config("exercise_config.json") {
         Ok(cfg) => cfg,
         Err(e) => {
@@ -73,33 +72,28 @@ fn main() {
         },
     };
 
-    
     evaluate_exercises_from_config(mode, config, &mut report);
 
-    
     report.statistics.total_time = start_time.elapsed().as_secs();
-    report.statistics.total_exercises = report.statistics.total_successes + report.statistics.total_failures;
+    report.statistics.total_exercises =
+        report.statistics.total_successes + report.statistics.total_failures;
 
-    
     println!("\nSummary:");
     println!("Total exercises: {}", report.statistics.total_exercises);
     println!("Total successes: {}", report.statistics.total_successes);
     println!("Total failures: {}", report.statistics.total_failures);
     println!("Total score: {}", report.statistics.total_score);
 
-    
     if let Err(e) = save_report_to_json("report.json", &report) {
         eprintln!("Error saving report: {}", e);
     }
 }
-
 
 fn load_exercise_config(file_path: &str) -> Result<ExerciseConfig, io::Error> {
     let file = File::open(file_path)?;
     let config: ExerciseConfig = serde_json::from_reader(file)?;
     Ok(config)
 }
-
 
 fn evaluate_exercises_from_config(mode: &str, config: ExerciseConfig, report: &mut Report) {
     let all_exercises = [config.easy, config.normal, config.hard].concat();
@@ -130,7 +124,6 @@ fn evaluate_exercises_from_config(mode: &str, config: ExerciseConfig, report: &m
     }
 }
 
-
 fn evaluate_exercise(exercise: &Exercise) -> bool {
     let exercise_path = PathBuf::from(&format!("./exercises/{}", exercise.path));
     match exercise.exercise_type.as_str() {
@@ -146,21 +139,20 @@ fn evaluate_exercise(exercise: &Exercise) -> bool {
 // 评测单文件 Rust 习题（使用 rustc --test 并执行测试）
 fn evaluate_single_file(file_path: &PathBuf) -> bool {
     // 获取文件名（不带扩展名）
-    let test_binary = file_path.with_extension(""); 
+    let test_binary = file_path.with_extension("");
 
     // 编译测试文件
     let compile_output = Command::new("rustc")
-        .arg("--test")  // 使用 rustc --test 进行编译
+        .arg("--test") // 使用 rustc --test 进行编译
         .arg(file_path)
         .arg("-o")
-        .arg(&test_binary)  // 指定输出文件
+        .arg(&test_binary) // 指定输出文件
         .output();
 
     if let Ok(output) = compile_output {
         if output.status.success() {
             // 编译成功，运行测试二进制文件
-            let test_output = Command::new(&test_binary)
-                .output();
+            let test_output = Command::new(&test_binary).output();
 
             let test_passed = match test_output {
                 Ok(test_run) => {
@@ -180,20 +172,27 @@ fn evaluate_single_file(file_path: &PathBuf) -> bool {
 
             // 删除测试二进制文件
             if let Err(e) = fs::remove_file(&test_binary) {
-                eprintln!("Failed to remove test binary {}: {}", test_binary.display(), e);
+                eprintln!(
+                    "Failed to remove test binary {}: {}",
+                    test_binary.display(),
+                    e
+                );
             } else {
-                println!("Successfully removed test binary: {}", test_binary.display());
+                println!(
+                    "Successfully removed test binary: {}",
+                    test_binary.display()
+                );
             }
 
-            return test_passed;
+            test_passed
         } else {
             // 编译失败
             eprintln!("\x1b[31m{}: COMPILATION FAILED\x1b[0m", file_path.display());
-            return false;
+            false
         }
     } else {
         eprintln!("Error executing rustc --test for {}", file_path.display());
-        return false;
+        false
     }
 }
 
@@ -237,7 +236,10 @@ fn clean_target_directory(proj_path: &PathBuf) {
         if let Err(e) = fs::remove_dir_all(&target_dir) {
             eprintln!("Failed to clean up target directory: {}", e);
         } else {
-            println!("Successfully cleaned up target directory in: {}", proj_path.display());
+            println!(
+                "Successfully cleaned up target directory in: {}",
+                proj_path.display()
+            );
         }
     }
 }

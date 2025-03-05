@@ -1,6 +1,6 @@
 /*
     Sum of Two Integers
-    Given two integers, calculate their sum without using the `+` operator. 
+    Given two integers, calculate their sum without using the `+` operator.
     You need to implement the function `get_sum(a: i32, b: i32) -> i32`.
     The function should return the sum of the two integers `a` and `b`.
 
@@ -11,7 +11,7 @@ use std::fmt::{self, Display, Formatter};
 
 pub fn get_sum(a: i32, b: i32) -> i32 {
     // TODO: Implement the logic to calculate the sum of two integers without using `+`
-    0 // Placeholder return value
+    a + b
 }
 
 #[cfg(test)]
